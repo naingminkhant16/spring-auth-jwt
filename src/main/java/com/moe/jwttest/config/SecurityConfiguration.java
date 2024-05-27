@@ -1,8 +1,10 @@
 package com.moe.jwttest.config;
 
 import com.moe.jwttest.filter.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -16,14 +18,10 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
+@RequiredArgsConstructor
 public class SecurityConfiguration {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    public SecurityConfiguration(AuthenticationProvider authenticationProvider, JwtAuthenticationFilter jwtAuthenticationFilter) {
-        this.authenticationProvider = authenticationProvider;
-        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-    }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -33,6 +31,8 @@ public class SecurityConfiguration {
                         config ->
                                 config
                                         .requestMatchers("/api/auth/**").permitAll()
+                                        .requestMatchers(HttpMethod.GET, "/api/blogs/**").hasAnyRole("ADMIN", "USER")
+                                        .requestMatchers("/api/blogs/**").hasRole("ADMIN")
                                         .anyRequest().authenticated()
                 )
                 .sessionManagement(

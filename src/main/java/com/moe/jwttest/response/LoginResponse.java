@@ -1,6 +1,5 @@
 package com.moe.jwttest.response;
 
-import com.moe.jwttest.dto.UserDto;
 import com.moe.jwttest.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;

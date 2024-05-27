@@ -4,6 +4,7 @@ import com.moe.jwttest.dto.LoginUserDto;
 import com.moe.jwttest.dto.RegisterUserDto;
 import com.moe.jwttest.entity.Role;
 import com.moe.jwttest.entity.User;
+import com.moe.jwttest.exception.ResourceNotFoundException;
 import com.moe.jwttest.repository.RoleRepository;
 import com.moe.jwttest.repository.UserRepository;
 import com.moe.jwttest.service.AuthenticationService;
@@ -31,7 +32,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public User register(RegisterUserDto registerUserDto) {
         //find provided role id
-        Role role = roleRepository.findById(registerUserDto.getRole_id()).orElseThrow();
+        Role role = roleRepository
+                .findById(registerUserDto.getRole_id())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Role", "id",
+                                registerUserDto.getRole_id().toString()
+                        )
+                );
 
         User user = new User();
 
