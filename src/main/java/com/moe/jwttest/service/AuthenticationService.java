@@ -1,11 +1,11 @@
 package com.moe.jwttest.service;
 
-import com.moe.jwttest.dto.LoginUserDto;
-import com.moe.jwttest.dto.RegisterUserDto;
+import com.moe.jwttest.payload.request.LoginRequest;
+import com.moe.jwttest.payload.request.RegisterRequest;
 import com.moe.jwttest.entity.User;
 
 public interface AuthenticationService {
-    User register(RegisterUserDto registerUserDto);
+    User register(RegisterRequest registerRequest);
 
-    User authenticate(LoginUserDto loginUserDto);
+    User authenticate(LoginRequest loginRequest);
 }

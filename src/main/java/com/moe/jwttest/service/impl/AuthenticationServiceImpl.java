@@ -1,7 +1,7 @@
 package com.moe.jwttest.service.impl;
 
-import com.moe.jwttest.dto.LoginUserDto;
-import com.moe.jwttest.dto.RegisterUserDto;
+import com.moe.jwttest.payload.request.LoginRequest;
+import com.moe.jwttest.payload.request.RegisterRequest;
 import com.moe.jwttest.entity.Role;
 import com.moe.jwttest.entity.User;
 import com.moe.jwttest.exception.ResourceNotFoundException;
@@ -30,23 +30,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User register(RegisterUserDto registerUserDto) {
+    public User register(RegisterRequest registerRequest) {
         //find provided role id
         Role role = roleRepository
-                .findById(registerUserDto.getRole_id())
+                .findById(registerRequest.getRole_id())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Role", "id",
-                                registerUserDto.getRole_id().toString()
+                                registerRequest.getRole_id().toString()
                         )
                 );
 
         User user = new User();
 
-        user.setName(registerUserDto.getName());
-        user.setEmail(registerUserDto.getEmail());
+        user.setName(registerRequest.getName());
+        user.setEmail(registerRequest.getEmail());
         user.setPassword(
-                passwordEncoder.encode(registerUserDto.getPassword())
+                passwordEncoder.encode(registerRequest.getPassword())
         );
         user.setRoles(List.of(role));
 
@@ -54,14 +54,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User authenticate(LoginUserDto loginUserDto) {
+    public User authenticate(LoginRequest loginRequest) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginUserDto.getEmail(),
-                        loginUserDto.getPassword()
+                        loginRequest.getEmail(),
+                        loginRequest.getPassword()
                 )
         );
 
-        return userRepository.findByEmail(loginUserDto.getEmail()).orElseThrow();
+        return userRepository.findByEmail(loginRequest.getEmail()).orElseThrow();
     }
 }

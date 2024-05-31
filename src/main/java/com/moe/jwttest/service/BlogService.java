@@ -1,6 +1,6 @@
 package com.moe.jwttest.service;
 
-import com.moe.jwttest.dto.BlogDto;
+import com.moe.jwttest.payload.request.BlogRequest;
 import com.moe.jwttest.entity.Blog;
 
 import java.util.List;
@@ -10,9 +10,11 @@ public interface BlogService {
 
     Blog findById(Long id);
 
-    BlogDto save(BlogDto blogDto);
+    BlogRequest save(BlogRequest blogRequest);
 
-    BlogDto updateById(BlogDto blogDto, Long id);
+    BlogRequest updateById(BlogRequest blogRequest, Long id);
 
     void deleteById(Long id);
+
+    List<Blog> paginate(String search, int pageNo, int limit);
 }

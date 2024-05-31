@@ -1,7 +1,7 @@
 package com.moe.jwttest.controller;
 
 import com.moe.jwttest.entity.User;
-import com.moe.jwttest.response.ApiResponse;
+import com.moe.jwttest.payload.response.ApiResponse;
 import com.moe.jwttest.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

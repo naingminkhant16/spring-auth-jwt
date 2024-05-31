@@ -1,4 +1,4 @@
-package com.moe.jwttest.dto;
+package com.moe.jwttest.payload.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class RegisterUserDto {
+public class RegisterRequest {
     @NotNull(message = "Name is required.")
     @Size(min = 1, message = "Name is required.")
     private String name;

@@ -1,10 +1,10 @@
 package com.moe.jwttest.controller;
 
-import com.moe.jwttest.dto.LoginUserDto;
-import com.moe.jwttest.dto.RegisterUserDto;
+import com.moe.jwttest.payload.request.LoginRequest;
+import com.moe.jwttest.payload.request.RegisterRequest;
 import com.moe.jwttest.entity.User;
-import com.moe.jwttest.response.ApiResponse;
-import com.moe.jwttest.response.LoginResponse;
+import com.moe.jwttest.payload.response.ApiResponse;
+import com.moe.jwttest.payload.response.LoginResponse;
 import com.moe.jwttest.service.AuthenticationService;
 import com.moe.jwttest.service.JwtService;
 import jakarta.validation.Valid;
@@ -24,9 +24,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginUserDto loginUserDto) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
 
-        User authenticatedUser = authenticationService.authenticate(loginUserDto);
+        User authenticatedUser = authenticationService.authenticate(loginRequest);
         String token = jwtService.generateToken(authenticatedUser);
         return ResponseEntity
                 .ok()
@@ -40,9 +40,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<User>> register(@Valid @RequestBody RegisterUserDto registerUserDto) {
+    public ResponseEntity<ApiResponse<User>> register(@Valid @RequestBody RegisterRequest registerRequest) {
 
-        User user = authenticationService.register(registerUserDto);
+        User user = authenticationService.register(registerRequest);
 
         return ResponseEntity
                 .ok()

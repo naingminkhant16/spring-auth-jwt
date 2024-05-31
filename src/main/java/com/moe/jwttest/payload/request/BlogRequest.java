@@ -1,4 +1,4 @@
-package com.moe.jwttest.dto;
+package com.moe.jwttest.payload.request;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -10,10 +10,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class BlogDto {
+public class BlogRequest {
 
-    private Long id;
-    
     @NotNull(message = "Blog title is required.")
     @Size(min = 1, max = 100, message = "Blog title should be between 1 and 100 chars.")
     private String title;

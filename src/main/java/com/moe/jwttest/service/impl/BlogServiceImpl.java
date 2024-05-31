@@ -1,6 +1,6 @@
 package com.moe.jwttest.service.impl;
 
-import com.moe.jwttest.dto.BlogDto;
+import com.moe.jwttest.payload.request.BlogRequest;
 import com.moe.jwttest.entity.Blog;
 import com.moe.jwttest.entity.User;
 import com.moe.jwttest.exception.ResourceNotFoundException;
@@ -9,11 +9,9 @@ import com.moe.jwttest.repository.UserRepository;
 import com.moe.jwttest.service.BlogService;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,36 +35,53 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
-    public BlogDto save(BlogDto blogDto) {
-        User author = userRepository
-                .findById(blogDto.getAuthor_id())
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Author", "id", blogDto.getAuthor_id().toString())
-                );
+    public List<Blog> paginate(String search, int pageNo, int limit) {
+        // if search key word is null, replace it with empty string ""
+        if (search == null) search = "";
 
-        Blog blog = new Blog();
-        blog.setTitle(blogDto.getTitle());
-        blog.setContent(blogDto.getContent());
-        blog.setAuthor(author);
-        Blog savedBlog = blogRepository.save(blog);
+        //if provided page number is less than 1, 1 will be the default pageNO
+        pageNo = Math.max(pageNo, 1);
 
-        return modelMapper.map(savedBlog, BlogDto.class);
+        //if provided size limit is less than 1, 10 will be the default size limit
+        limit = (limit < 1) ? 10 : limit;
+
+        //calculate offset
+        int offset = (pageNo - 1) * limit;
+
+        return blogRepository.paginate(search, limit, offset);
     }
 
     @Override
-    public BlogDto updateById(BlogDto blogDto, Long id) {
+    public BlogRequest save(BlogRequest blogRequest) {
+        User author = userRepository
+                .findById(blogRequest.getAuthor_id())
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Author", "id", blogRequest.getAuthor_id().toString())
+                );
+
+        Blog blog = new Blog();
+        blog.setTitle(blogRequest.getTitle());
+        blog.setContent(blogRequest.getContent());
+        blog.setAuthor(author);
+        Blog savedBlog = blogRepository.save(blog);
+
+        return modelMapper.map(savedBlog, BlogRequest.class);
+    }
+
+    @Override
+    public BlogRequest updateById(BlogRequest blogRequest, Long id) {
         Blog existingBlog = blogRepository
                 .findById(id)
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Blog", "id", id.toString())
                 );
 
-        existingBlog.setTitle(blogDto.getTitle());
-        existingBlog.setContent(blogDto.getContent());
+        existingBlog.setTitle(blogRequest.getTitle());
+        existingBlog.setContent(blogRequest.getContent());
 
         Blog updatedBlog = blogRepository.save(existingBlog);
 
-        return modelMapper.map(updatedBlog, BlogDto.class);
+        return modelMapper.map(updatedBlog, BlogRequest.class);
     }
 
     @Override

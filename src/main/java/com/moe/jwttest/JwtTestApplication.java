@@ -9,5 +9,6 @@ public class JwtTestApplication {
     public static void main(String[] args) {
         SpringApplication.run(JwtTestApplication.class, args);
     }
-    //TODO blog search, pagination
+    // TODO file upload
+    // TODO write test cases
 }

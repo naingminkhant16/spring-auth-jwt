@@ -1,14 +1,14 @@
 package com.moe.jwttest.controller;
 
-import com.moe.jwttest.dto.BlogDto;
+import com.moe.jwttest.payload.request.BlogRequest;
 import com.moe.jwttest.entity.Blog;
-import com.moe.jwttest.response.ApiResponse;
+import com.moe.jwttest.payload.response.ResourceResponse;
+import com.moe.jwttest.payload.response.ApiResponse;
 import com.moe.jwttest.service.BlogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,46 +20,46 @@ public class BlogController {
     private final BlogService blogService;
 
     @GetMapping("")
-    public ResponseEntity<ApiResponse<List<Blog>>> getAllBlogs() {
-        List<Blog> blogs = blogService.findAll();
+    public ResponseEntity<ResourceResponse<List<Blog>>> getAllBlogs(
+            @RequestParam(name = "page", defaultValue = "1", required = false) int pageNo,
+            @RequestParam(name = "limit", defaultValue = "10", required = false) int limit,
+            @RequestParam(name = "search", defaultValue = "", required = false) String search
+    ) {
+        List<Blog> blogs = blogService.paginate(search, pageNo, limit);
 
-        return ResponseEntity.ok()
-                .body(
-                        new ApiResponse<>(HttpStatus.OK, "success", blogs)
-                );
+        return ResponseEntity.ok(
+                new ResourceResponse<>(pageNo, limit, HttpStatus.OK, "success", blogs)
+        );
     }
-    
-    @PostMapping("")
-    public ResponseEntity<ApiResponse<BlogDto>> createBlog(@Valid @RequestBody BlogDto blogDto) {
-        BlogDto createdBlog = blogService.save(blogDto);
 
-        return ResponseEntity.ok()
-                .body(
-                        new ApiResponse<>(HttpStatus.OK, "success", createdBlog)
-                );
+    @PostMapping("")
+    public ResponseEntity<ApiResponse<BlogRequest>> createBlog(@Valid @RequestBody BlogRequest blogRequest) {
+        BlogRequest createdBlog = blogService.save(blogRequest);
+
+        return ResponseEntity.ok(
+                new ApiResponse<>(HttpStatus.CREATED, "success", createdBlog)
+        );
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Blog>> getById(@PathVariable Long id) {
         Blog blog = blogService.findById(id);
 
-        return ResponseEntity.ok()
-                .body(
-                        new ApiResponse<>(HttpStatus.OK, "success", blog)
-                );
+        return ResponseEntity.ok(
+                new ApiResponse<>(HttpStatus.OK, "success", blog)
+        );
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<BlogDto>> updateBlogById(
-            @Valid @RequestBody BlogDto blogDto,
+    public ResponseEntity<ApiResponse<BlogRequest>> updateBlogById(
+            @Valid @RequestBody BlogRequest blogRequest,
             @PathVariable Long id
     ) {
-        BlogDto updatedBlog = blogService.updateById(blogDto, id);
+        BlogRequest updatedBlog = blogService.updateById(blogRequest, id);
 
-        return ResponseEntity.ok()
-                .body(
-                        new ApiResponse<>(HttpStatus.OK, "successfully updated", updatedBlog)
-                );
+        return ResponseEntity.ok(
+                new ApiResponse<>(HttpStatus.OK, "successfully updated", updatedBlog)
+        );
     }
 
     @DeleteMapping("/{id}")

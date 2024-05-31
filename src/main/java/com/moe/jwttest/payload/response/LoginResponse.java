@@ -1,4 +1,4 @@
-package com.moe.jwttest.response;
+package com.moe.jwttest.payload.response;
 
 import com.moe.jwttest.entity.User;
 import lombok.AllArgsConstructor;
