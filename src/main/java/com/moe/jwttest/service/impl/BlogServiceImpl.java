@@ -7,10 +7,16 @@ import com.moe.jwttest.exception.ResourceNotFoundException;
 import com.moe.jwttest.repository.BlogRepository;
 import com.moe.jwttest.repository.UserRepository;
 import com.moe.jwttest.service.BlogService;
+import jakarta.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -20,6 +26,8 @@ public class BlogServiceImpl implements BlogService {
     private final BlogRepository blogRepository;
     private final UserRepository userRepository;
     private final ModelMapper modelMapper;
+    private final String imagePath = "resources/images";
+    private final ServletContext context;
 
     @Override
     public List<Blog> findAll() {
@@ -59,13 +67,33 @@ public class BlogServiceImpl implements BlogService {
                         () -> new ResourceNotFoundException("Author", "id", blogRequest.getAuthor_id().toString())
                 );
 
-        Blog blog = new Blog();
-        blog.setTitle(blogRequest.getTitle());
-        blog.setContent(blogRequest.getContent());
-        blog.setAuthor(author);
-        Blog savedBlog = blogRepository.save(blog);
+        try {
+            Blog blog = new Blog();
 
-        return modelMapper.map(savedBlog, BlogRequest.class);
+            if (blogRequest.getImage() != null) {
+                // create directories if they do not exist
+                Path imagePath = Paths.get("src/main/resources/static/images");
+                if (!Files.exists(imagePath)) {
+                    Files.createDirectories(imagePath);
+                }
+
+                //store image in images folder under src/main/resources/static/
+                byte[] decodedBytes = Base64.getDecoder().decode(blogRequest.getImage());  //decode the image
+                Path path = imagePath.resolve(new Date().getTime() + ".png");
+                Files.write(path, decodedBytes);//file write
+                blog.setImage(path.toString());
+            }
+
+            blog.setTitle(blogRequest.getTitle());
+            blog.setContent(blogRequest.getContent());
+            blog.setAuthor(author);
+            //save to db
+            Blog savedBlog = blogRepository.save(blog);
+
+            return modelMapper.map(savedBlog, BlogRequest.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Override

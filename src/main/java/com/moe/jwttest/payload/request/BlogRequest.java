@@ -19,7 +19,8 @@ public class BlogRequest {
     @NotNull(message = "Blog content is required.")
     @Size(min = 1, max = 500, message = "Blog content should be between 1 and 500 chars.")
     private String content;
-    
+
+    @NotNull(message = "Blog image is required.")
     private String image;
 
     @NotNull(message = "Author id is required.")
