@@ -11,7 +11,9 @@ import jakarta.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,6 +30,7 @@ public class BlogServiceImpl implements BlogService {
     private final ModelMapper modelMapper;
     private final String imagePath = "resources/images";
     private final ServletContext context;
+    private final String baseStorageDir = "src/main/resources/static/images";
 
     @Override
     public List<Blog> findAll() {
@@ -72,16 +75,27 @@ public class BlogServiceImpl implements BlogService {
 
             if (blogRequest.getImage() != null) {
                 // create directories if they do not exist
-                Path imagePath = Paths.get("src/main/resources/static/images");
+                Path imagePath = Paths.get(baseStorageDir);
                 if (!Files.exists(imagePath)) {
                     Files.createDirectories(imagePath);
                 }
 
                 //store image in images folder under src/main/resources/static/
-                byte[] decodedBytes = Base64.getDecoder().decode(blogRequest.getImage());  //decode the image
-                Path path = imagePath.resolve(new Date().getTime() + ".png");
-                Files.write(path, decodedBytes);//file write
-                blog.setImage(path.toString());
+                //decode the image
+                byte[] decodedBytes = Base64.getDecoder().decode(blogRequest.getImage());
+                String imageName = new Date().getTime() + ".png";
+                Path path = imagePath.resolve(imageName);
+
+                // write file in static/images
+                Files.write(path, decodedBytes);
+
+                //generate image url
+                String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/images/")
+                        .path(imageName)
+                        .toUriString();
+
+                blog.setImage(imageUrl);//save image url in db
             }
 
             blog.setTitle(blogRequest.getTitle());
@@ -119,6 +133,25 @@ public class BlogServiceImpl implements BlogService {
                 .orElseThrow(
                         () -> new ResourceNotFoundException("Blog", "id", id.toString())
                 );
+
+        // also delete the associated image
+        try {
+            String imageUrl = existingBlog.getImage();//Eg. http://localhost:8080/images/image1.png
+            if (imageUrl != null) {
+                // extract the file name from the URL
+                String fileName = Paths.get(
+                                new URI(imageUrl) // will return 'images/image1.png'
+                                        .getPath() // convert into Path obj
+                        )
+                        .getFileName() // will return 'image1.png'
+                        .toString();
+
+                Path imagePath = Paths.get(baseStorageDir).resolve(fileName);
+                Files.deleteIfExists(imagePath); //delete image
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete the image file", e);
+        }
 
         blogRepository.delete(existingBlog);
     }
