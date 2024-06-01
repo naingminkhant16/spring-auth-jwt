@@ -33,6 +33,9 @@ public class Blog {
     @JsonIgnore
     private User author;
 
+    @Column(name = "image")
+    private String image;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Date createdAt;
