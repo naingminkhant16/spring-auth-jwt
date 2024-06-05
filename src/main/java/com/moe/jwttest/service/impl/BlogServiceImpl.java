@@ -10,6 +10,7 @@ import com.moe.jwttest.service.BlogService;
 import jakarta.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -30,7 +31,9 @@ public class BlogServiceImpl implements BlogService {
     private final ModelMapper modelMapper;
     private final String imagePath = "resources/images";
     private final ServletContext context;
-    private final String baseStorageDir = "src/main/resources/static/images";
+
+    @Value("${image-storage-path}")
+    private String imageStoragePath;
 
     @Override
     public List<Blog> findAll() {
@@ -74,20 +77,11 @@ public class BlogServiceImpl implements BlogService {
             Blog blog = new Blog();
 
             if (blogRequest.getImage() != null) {
-                // create directories if they do not exist
-                Path imagePath = Paths.get(baseStorageDir);
-                if (!Files.exists(imagePath)) {
-                    Files.createDirectories(imagePath);
-                }
-
                 //store image in images folder under src/main/resources/static/
-                //decode the image
-                byte[] decodedBytes = Base64.getDecoder().decode(blogRequest.getImage());
-                String imageName = new Date().getTime() + ".png";
-                Path path = imagePath.resolve(imageName);
-
-                // write file in static/images
-                Files.write(path, decodedBytes);
+                byte[] decodedBytes = Base64.getDecoder().decode(blogRequest.getImage());  // decode the image
+                String imageName = new Date().getTime() + ".png";// generate image name
+                Path toStorePath = Paths.get(imageStoragePath).resolve(imageName);
+                Files.write(toStorePath, decodedBytes); // write file in static/images
 
                 //generate image url
                 String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -112,18 +106,45 @@ public class BlogServiceImpl implements BlogService {
 
     @Override
     public BlogRequest updateById(BlogRequest blogRequest, Long id) {
-        Blog existingBlog = blogRepository
-                .findById(id)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("Blog", "id", id.toString())
-                );
+        Blog existingBlog = blogRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Blog", "id", id.toString()));
 
-        existingBlog.setTitle(blogRequest.getTitle());
-        existingBlog.setContent(blogRequest.getContent());
+        try {
+            if (blogRequest.getImage() != null) {
+                Path path = Paths.get(imageStoragePath);
+                // delete old image file
+                String oldImageName = Paths.get(
+                                new URI(existingBlog.getImage()).getPath()
+                        )
+                        .getFileName()
+                        .toString();
+                Path toDeletePath = path.resolve(oldImageName);
+                Files.deleteIfExists(toDeletePath);
 
-        Blog updatedBlog = blogRepository.save(existingBlog);
+                // Store new image file
+                byte[] decodedBytes = Base64.getDecoder().decode(blogRequest.getImage());
+                String imageName = new Date().getTime() + ".png";
+                Path toStorePath = path.resolve(imageName);
+                Files.write(toStorePath, decodedBytes);
 
-        return modelMapper.map(updatedBlog, BlogRequest.class);
+                // generate image url to store in db
+                String newImageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
+                        .path("/images/")
+                        .path(imageName)
+                        .toUriString();
+                //save to entity
+                existingBlog.setImage(newImageUrl);
+            }
+
+            existingBlog.setTitle(blogRequest.getTitle());
+            existingBlog.setContent(blogRequest.getContent());
+
+            Blog updatedBlog = blogRepository.save(existingBlog);
+
+            return modelMapper.map(updatedBlog, BlogRequest.class);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Override
@@ -134,8 +155,8 @@ public class BlogServiceImpl implements BlogService {
                         () -> new ResourceNotFoundException("Blog", "id", id.toString())
                 );
 
-        // also delete the associated image
         try {
+            // also delete the associated image
             String imageUrl = existingBlog.getImage();//Eg. http://localhost:8080/images/image1.png
             if (imageUrl != null) {
                 // extract the file name from the URL
@@ -146,13 +167,13 @@ public class BlogServiceImpl implements BlogService {
                         .getFileName() // will return 'image1.png'
                         .toString();
 
-                Path imagePath = Paths.get(baseStorageDir).resolve(fileName);
+                Path imagePath = Paths.get(imageStoragePath).resolve(fileName);
                 Files.deleteIfExists(imagePath); //delete image
             }
+
+            blogRepository.delete(existingBlog);
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete the image file", e);
         }
-
-        blogRepository.delete(existingBlog);
     }
 }

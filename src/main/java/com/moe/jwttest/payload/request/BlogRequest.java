@@ -1,6 +1,7 @@
 package com.moe.jwttest.payload.request;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,10 @@ public class BlogRequest {
     @Size(min = 1, max = 500, message = "Blog content should be between 1 and 500 chars.")
     private String content;
 
-    @NotNull(message = "Blog image is required.")
+    @Pattern(
+            regexp = "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$",
+            message = "Invalid Base64 string for image."
+    )
     private String image;
 
     @NotNull(message = "Author id is required.")

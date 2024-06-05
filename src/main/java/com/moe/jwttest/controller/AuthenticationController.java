@@ -7,6 +7,9 @@ import com.moe.jwttest.payload.response.ApiResponse;
 import com.moe.jwttest.payload.response.LoginResponse;
 import com.moe.jwttest.service.AuthenticationService;
 import com.moe.jwttest.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Authentication", description = "Endpoints for authentication")
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final JwtService jwtService;
@@ -24,6 +28,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Login Attempt", description = "User/Admin Login")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
 
         User authenticatedUser = authenticationService.authenticate(loginRequest);
@@ -40,6 +45,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "User Registration", description = "User/Admin Registration")
     public ResponseEntity<ApiResponse<User>> register(@Valid @RequestBody RegisterRequest registerRequest) {
 
         User user = authenticationService.register(registerRequest);
