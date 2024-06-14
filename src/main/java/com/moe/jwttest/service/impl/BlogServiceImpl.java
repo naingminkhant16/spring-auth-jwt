@@ -10,7 +10,12 @@ import com.moe.jwttest.service.BlogService;
 import jakarta.servlet.ServletContext;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -31,25 +36,31 @@ public class BlogServiceImpl implements BlogService {
     private final ModelMapper modelMapper;
     private final String imagePath = "resources/images";
     private final ServletContext context;
+    private final Logger logger = LoggerFactory.getLogger(BlogServiceImpl.class);
 
     @Value("${image-storage-path}")
     private String imageStoragePath;
 
     @Override
+    @Cacheable(value = "blogCache")
     public List<Blog> findAll() {
+        logger.info("Getting all blog...");
         return blogRepository.findAll();
     }
 
     @Override
+    @Cacheable(value = "blogCache", key = "#id")
     public Blog findById(Long id) {
-
+        logger.info("Get blog by id with : {} ...", id);
         return blogRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog", "id", id.toString()));
     }
 
     @Override
+    @Cacheable(value = "blogCache")
     public List<Blog> paginate(String search, int pageNo, int limit) {
+        logger.info("Paginating blogs...");
         // if search key word is null, replace it with empty string ""
         if (search == null) search = "";
 
@@ -66,7 +77,9 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    @CacheEvict(value = "blogCache", allEntries = true)
     public BlogRequest save(BlogRequest blogRequest) {
+        logger.info("Creating new blog...");
         User author = userRepository
                 .findById(blogRequest.getAuthor_id())
                 .orElseThrow(
@@ -105,7 +118,9 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    @CachePut(value = "blogCache", key = "#id")
     public BlogRequest updateById(BlogRequest blogRequest, Long id) {
+        logger.info("Updating blog with id : {} ...", id);
         Blog existingBlog = blogRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Blog", "id", id.toString()));
 
@@ -148,7 +163,9 @@ public class BlogServiceImpl implements BlogService {
     }
 
     @Override
+    @CacheEvict(value = "blogCache", allEntries = true)
     public void deleteById(Long id) {
+        logger.info("Deleting blog with id : {} ...", id);
         Blog existingBlog = blogRepository
                 .findById(id)
                 .orElseThrow(
